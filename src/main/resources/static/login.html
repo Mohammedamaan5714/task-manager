@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="top-right">
+    <a href="/task/register.html" class="register-btn">Register</a>
+</div>
+
+<div class="container">
+    <h2>Task Manager Login</h2>
+
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="login()">Login</button>
+    <p id="error" class="error"></p>
+</div>
+<script>
+    const APP_CONTEXT = "/task";
+
+    function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        const token = btoa(username + ":" + password);
+        localStorage.setItem("authToken", token);
+
+        fetch(APP_CONTEXT + "/entry", {
+            headers: { "Authorization": "Basic " + token }
+        })
+        .then(res => {
+            if (res.ok) {
+                window.location.href = APP_CONTEXT + "/dashboard.html";
+            } else {
+                document.getElementById("error").innerText = "Invalid username or password";
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

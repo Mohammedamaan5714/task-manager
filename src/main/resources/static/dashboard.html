@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Tasks</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container dashboard">
+    <div class="top-bar">
+        <h2>My Tasks</h2>
+        <button class="logout" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="task-form">
+        <input type="text" id="title" placeholder="Task Title">
+        <input type="text" id="content" placeholder="Task Content">
+        <button onclick="addTask()">Add Task</button>
+    </div>
+
+    <div id="taskList"></div>
+</div>
+
+<script>
+    const APP_CONTEXT = "/task";
+    const baseUrl = APP_CONTEXT + "/entry";
+    const authToken = localStorage.getItem("authToken");
+
+    if (!authToken) {
+        window.location.href = APP_CONTEXT + "/login.html";
+    }
+
+    function loadTasks() {
+    fetch(baseUrl, {
+        headers: { "Authorization": "Basic " + authToken }
+    })
+    .then(res => res.status === 204 ? [] : res.json())
+    .then(tasks => {
+        const list = document.getElementById("taskList");
+        list.innerHTML = "";
+
+        tasks.forEach(task => {
+            const div = document.createElement("div");
+            div.className = "task";
+
+            div.innerHTML = `
+                <h3>${task.title}</h3>
+                <p>${task.content || ""}</p>
+                <div class="task-buttons">
+                    <button class="edit-btn"
+                        data-id="${task.id}"
+                        data-title="${task.title}"
+                        data-content="${task.content || ""}">
+                        Edit
+                    </button>
+                    <button class="delete" data-id="${task.id}">
+                        Delete
+                    </button>
+                </div>
+            `;
+
+            list.appendChild(div);
+        });
+
+        // attach handlers AFTER rendering
+        document.querySelectorAll(".delete").forEach(btn => {
+            btn.onclick = () => deleteTask(btn.dataset.id);
+        });
+
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.onclick = () =>
+                editTask(btn.dataset.id, btn.dataset.title, btn.dataset.content);
+        });
+    });
+}
+
+
+
+    function addTask() {
+        const title = document.getElementById("title").value;
+        const content = document.getElementById("content").value;
+
+        fetch(baseUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Basic " + authToken
+            },
+            body: JSON.stringify({ title, content })
+        }).then(() => {
+            loadTasks();
+            document.getElementById("title").value = "";
+            document.getElementById("content").value = "";
+        });
+    }
+
+    function deleteTask(id) {
+        fetch(baseUrl + "/id/" + id, {
+            method: "DELETE",
+            headers: { "Authorization": "Basic " + authToken }
+        })
+        .then(res => {
+            console.log("DELETE status:", res.status);
+            if (!res.ok) alert("Delete failed");
+            loadTasks();
+        })
+        .catch(err => console.error("Delete error", err));
+    }
+
+
+    function editTask(id, oldTitle, oldContent) {
+        const title = prompt("Edit Title", oldTitle);
+        const content = prompt("Edit Content", oldContent);
+
+        if (title === null) return;
+
+        fetch(baseUrl + "/id/" + id, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Basic " + authToken
+            },
+            body: JSON.stringify({ title, content })
+        })
+        .then(res => {
+            console.log("PUT status:", res.status);
+            if (!res.ok) alert("Update failed");
+            loadTasks();
+        })
+        .catch(err => console.error("Update error", err));
+    }
+
+
+    function logout() {
+        localStorage.removeItem("authToken");
+        window.location.href = APP_CONTEXT + "/login.html";
+    }
+
+    loadTasks();
+</script>
+
+</body>
+</html>

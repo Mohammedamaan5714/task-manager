@@ -1,0 +1,43 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <h2>Create Account</h2>
+
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="register()">Register</button>
+
+    <p id="msg"></p>
+    <p><a href="/task/login.html">Back to Login</a></p>
+</div>
+
+<script>
+function register() {
+    fetch("/task/public/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            userName: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        })
+    })
+    .then(res => {
+        if (res.ok) {
+            document.getElementById("msg").innerText = "User created! Go login.";
+        } else {
+            document.getElementById("msg").innerText = "Registration failed";
+        }
+    });
+}
+</script>
+
+</body>
+</html>
